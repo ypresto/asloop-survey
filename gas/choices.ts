@@ -9,6 +9,7 @@ const itemAcceptsResponseSet = new Set([
   FormApp.ItemType.GRID,
   FormApp.ItemType.LIST,
   FormApp.ItemType.MULTIPLE_CHOICE,
+  FormApp.ItemType.PARAGRAPH_TEXT,
   FormApp.ItemType.SCALE,
   FormApp.ItemType.TEXT,
   FormApp.ItemType.TIME,
