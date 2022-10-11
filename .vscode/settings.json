@@ -1,0 +1,27 @@
+{
+  "cSpell.words": [
+    "bokeh",
+    "catplot",
+    "crosstab",
+    "displot",
+    "dropna",
+    "edgecolor",
+    "facecolor",
+    "figaspect",
+    "figsize",
+    "fontsize",
+    "fontweight",
+    "hbar",
+    "iloc",
+    "iterrows",
+    "linewidth",
+    "matplotlib",
+    "notna",
+    "patheffects",
+    "suptitle",
+    "usecols",
+    "whitegrid",
+    "yaxis",
+    "ylim"
+  ]
+}
