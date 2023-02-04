@@ -28,12 +28,12 @@ function getChoices() {
     }
   })
 
-  const spreadSheet = SpreadsheetApp.create(`${form.getTitle()}-choices`, titleAndChoicesMap.length + 1, 4)
+  const spreadSheet = SpreadsheetApp.create(`${form.getTitle()}-choices`, titleAndChoicesMap.length + 1, 6)
   const sheet = spreadSheet.getSheets()[0]
 
-  sheet.getRange(1, 1, 1, 4).setValues([['設問文章', '選択肢', '複数回答', '自由記述']])
-  titleAndChoicesMap.forEach(({ title, choices, hasMultiple, hasOther }, i) => {
-    sheet.getRange(i + 2, 1, 1, 4).setValues([[title, choices?.join(',') ?? '', hasMultiple ? 1 : 0, hasOther ? 1 : 0]])
+  sheet.getRange(1, 1, 1, 6).setValues([['設問番号', '設問文章', '説明文', '選択肢', '複数回答', '自由記述']])
+  titleAndChoicesMap.forEach(({ index, title, description, choices, hasMultiple, hasOther }, i) => {
+    sheet.getRange(i + 2, 1, 1, 6).setValues([[index, title, description, choices?.join(',') ?? '', hasMultiple ? 1 : 0, hasOther ? 1 : 0]])
   })
   sheet.setColumnWidth(2, 1200)
 
@@ -66,5 +66,5 @@ function getTitleAndChoicesWithOther(item: GoogleAppsScript.Forms.Item) {
     }
   }
 
-  return { title: item.getTitle(), choices, hasMultiple, hasOther }
+  return { index: item.getIndex(), title: item.getTitle(), description: item.getHelpText(), choices, hasMultiple, hasOther }
 }

@@ -25,12 +25,12 @@ function getChoices() {
             throw new Error(`Item "${title}" has a comma in one of its choices.`);
         }
     });
-    const spreadSheet = SpreadsheetApp.create(`${form.getTitle()}-choices`, titleAndChoicesMap.length + 1, 4);
+    const spreadSheet = SpreadsheetApp.create(`${form.getTitle()}-choices`, titleAndChoicesMap.length + 1, 6);
     const sheet = spreadSheet.getSheets()[0];
-    sheet.getRange(1, 1, 1, 4).setValues([['設問文章', '選択肢', '複数回答', '自由記述']]);
-    titleAndChoicesMap.forEach(({ title, choices, hasMultiple, hasOther }, i) => {
+    sheet.getRange(1, 1, 1, 6).setValues([['設問番号', '設問文章', '説明文', '選択肢', '複数回答', '自由記述']]);
+    titleAndChoicesMap.forEach(({ index, title, description, choices, hasMultiple, hasOther }, i) => {
         var _a;
-        sheet.getRange(i + 2, 1, 1, 4).setValues([[title, (_a = choices === null || choices === void 0 ? void 0 : choices.join(',')) !== null && _a !== void 0 ? _a : '', hasMultiple ? 1 : 0, hasOther ? 1 : 0]]);
+        sheet.getRange(i + 2, 1, 1, 6).setValues([[index, title, description, (_a = choices === null || choices === void 0 ? void 0 : choices.join(',')) !== null && _a !== void 0 ? _a : '', hasMultiple ? 1 : 0, hasOther ? 1 : 0]]);
     });
     sheet.setColumnWidth(2, 1200);
     Logger.log('SpreadSheet created on %s', spreadSheet.getUrl());
@@ -60,5 +60,5 @@ function getTitleAndChoicesWithOther(item) {
             hasOther = concreteItem.hasOtherOption();
         }
     }
-    return { title: item.getTitle(), choices, hasMultiple, hasOther };
+    return { index: item.getIndex(), title: item.getTitle(), description: item.getHelpText(), choices, hasMultiple, hasOther };
 }
