@@ -43,10 +43,10 @@ function getChoices() {
   const spreadSheet = SpreadsheetApp.create(`${form.getTitle()}-choices`, titleAndChoicesMap.length + 1, 6)
   const sheet = spreadSheet.getSheets()[0]
 
-  sheet.getRange(1, 1, 1, 7).setValues([['ページ番号', '設問文章', '説明文', '選択肢', '複数回答', '自由記述', 'ジャンプ先ページ番号マップ']])
-  titleAndChoicesMap.forEach(({ pageIndex, title, description, choices, hasMultiple, hasOther }, i) => {
+  sheet.getRange(1, 1, 1, 8).setValues([['ページ番号', '設問文章', '説明文', '選択肢', '複数回答', '自由記述', 'テキスト回答', 'ジャンプ先ページ番号マップ']])
+  titleAndChoicesMap.forEach(({ pageIndex, title, description, choices, hasMultiple, hasOther, isText }, i) => {
     const pageMap = choices?.length ? JSON.stringify(choices.map(c => c.goTo ?? null)) : ''
-    sheet.getRange(i + 2, 1, 1, 7).setValues([[pageIndex, title, description, choices?.map(c => c.value).join(',') ?? '', hasMultiple ? 1 : 0, hasOther ? 1 : 0, pageMap]])
+    sheet.getRange(i + 2, 1, 1, 8).setValues([[pageIndex, title, description, choices?.map(c => c.value).join(',') ?? '', hasMultiple ? 1 : 0, hasOther ? 1 : 0, isText ? 1 : 0, pageMap]])
   })
   sheet.setColumnWidth(2, 1200)
 
@@ -58,6 +58,7 @@ function getTitleAndChoicesWithOther(pageBreak: GoogleAppsScript.Forms.PageBreak
   let choices: { value: string, goTo?: number }[] | null = null;
   let hasMultiple = false
   let hasOther = false
+  let isText = false
 
   switch (item.getType()) {
     case FormApp.ItemType.LIST: {
@@ -77,7 +78,11 @@ function getTitleAndChoicesWithOther(pageBreak: GoogleAppsScript.Forms.PageBreak
       hasMultiple = true
       hasOther = concreteItem.hasOtherOption()
     }
+    break
+    case FormApp.ItemType.TEXT:
+    case FormApp.ItemType.PARAGRAPH_TEXT:
+      isText = true
   }
 
-  return { pageIndex: pageBreak?.getIndex(), title: item.getTitle(), description: item.getHelpText(), choices, hasMultiple, hasOther }
+  return { pageIndex: pageBreak?.getIndex(), title: item.getTitle(), description: item.getHelpText(), choices, hasMultiple, hasOther, isText }
 }
