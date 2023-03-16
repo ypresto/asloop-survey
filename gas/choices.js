@@ -17,25 +17,34 @@ const itemAcceptsResponseSet = new Set([
 ]);
 function getChoices() {
     const form = FormApp.getActiveForm();
-    const titleAndChoicesMap = form.getItems()
-        .filter(item => itemAcceptsResponseSet.has(item.getType()))
-        .map(item => getTitleAndChoicesWithOther(item));
+    let lastPageBreak;
+    const titleAndChoicesMap = [];
+    for (const item of form.getItems()) {
+        if (item.getType() === FormApp.ItemType.PAGE_BREAK) {
+            lastPageBreak = item.asPageBreakItem();
+            continue;
+        }
+        if (itemAcceptsResponseSet.has(item.getType())) {
+            titleAndChoicesMap.push(getTitleAndChoicesWithOther(lastPageBreak, item));
+        }
+    }
     titleAndChoicesMap.forEach(({ title, choices }) => {
-        if (choices === null || choices === void 0 ? void 0 : choices.some(c => c.includes(','))) {
+        if (choices === null || choices === void 0 ? void 0 : choices.some(c => c.value.includes(','))) {
             throw new Error(`Item "${title}" has a comma in one of its choices.`);
         }
     });
     const spreadSheet = SpreadsheetApp.create(`${form.getTitle()}-choices`, titleAndChoicesMap.length + 1, 6);
     const sheet = spreadSheet.getSheets()[0];
-    sheet.getRange(1, 1, 1, 6).setValues([['設問番号', '設問文章', '説明文', '選択肢', '複数回答', '自由記述']]);
-    titleAndChoicesMap.forEach(({ index, title, description, choices, hasMultiple, hasOther }, i) => {
+    sheet.getRange(1, 1, 1, 7).setValues([['ページ番号', '設問文章', '説明文', '選択肢', '複数回答', '自由記述', 'ジャンプ先ページ番号マップ']]);
+    titleAndChoicesMap.forEach(({ pageIndex, title, description, choices, hasMultiple, hasOther }, i) => {
         var _a;
-        sheet.getRange(i + 2, 1, 1, 6).setValues([[index, title, description, (_a = choices === null || choices === void 0 ? void 0 : choices.join(',')) !== null && _a !== void 0 ? _a : '', hasMultiple ? 1 : 0, hasOther ? 1 : 0]]);
+        const pageMap = (choices === null || choices === void 0 ? void 0 : choices.length) ? JSON.stringify(choices.map(c => { var _a; return (_a = c.goTo) !== null && _a !== void 0 ? _a : null; })) : '';
+        sheet.getRange(i + 2, 1, 1, 7).setValues([[pageIndex, title, description, (_a = choices === null || choices === void 0 ? void 0 : choices.map(c => c.value).join(',')) !== null && _a !== void 0 ? _a : '', hasMultiple ? 1 : 0, hasOther ? 1 : 0, pageMap]]);
     });
     sheet.setColumnWidth(2, 1200);
     Logger.log('SpreadSheet created on %s', spreadSheet.getUrl());
 }
-function getTitleAndChoicesWithOther(item) {
+function getTitleAndChoicesWithOther(pageBreak, item) {
     let choices = null;
     let hasMultiple = false;
     let hasOther = false;
@@ -43,22 +52,22 @@ function getTitleAndChoicesWithOther(item) {
         case FormApp.ItemType.LIST:
             {
                 const concreteItem = item.asListItem();
-                choices = concreteItem.getChoices().map(c => c.getValue());
+                choices = concreteItem.getChoices().map(c => { var _a; return ({ value: c.getValue(), goTo: (_a = c.getGotoPage()) === null || _a === void 0 ? void 0 : _a.getIndex() }); });
             }
             break;
         case FormApp.ItemType.MULTIPLE_CHOICE:
             { // Radio Buttons
                 const concreteItem = item.asMultipleChoiceItem();
-                choices = concreteItem.getChoices().map(c => c.getValue());
+                choices = concreteItem.getChoices().map(c => { var _a; return ({ value: c.getValue(), goTo: (_a = c.getGotoPage()) === null || _a === void 0 ? void 0 : _a.getIndex() }); });
                 hasOther = concreteItem.hasOtherOption();
             }
             break;
         case FormApp.ItemType.CHECKBOX: {
             const concreteItem = item.asCheckboxItem();
-            choices = concreteItem.getChoices().map(c => c.getValue());
+            choices = concreteItem.getChoices().map(c => { var _a; return ({ value: c.getValue(), goTo: (_a = c.getGotoPage()) === null || _a === void 0 ? void 0 : _a.getIndex() }); });
             hasMultiple = true;
             hasOther = concreteItem.hasOtherOption();
         }
     }
-    return { index: item.getIndex(), title: item.getTitle(), description: item.getHelpText(), choices, hasMultiple, hasOther };
+    return { pageIndex: pageBreak === null || pageBreak === void 0 ? void 0 : pageBreak.getIndex(), title: item.getTitle(), description: item.getHelpText(), choices, hasMultiple, hasOther };
 }
