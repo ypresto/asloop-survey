@@ -69,8 +69,9 @@ function renderQuestionItem(context: ContextType, item: QuestionItemType) {
   const { body, tabulationMap } = context
   const tabulation = tabulationMap[item.title]
 
-  const heading = body.appendParagraph(item.title)
-  heading.setHeading(DocumentApp.ParagraphHeading.HEADING3)
+  const title = body.appendParagraph(item.number + '. ' + item.title)
+  title.setAttributes({ [DocumentApp.Attribute.BOLD]: true })
+
   if (!tabulation) {
     const warning = body.appendParagraph('集計情報が見つかりません')
     warning.asText().setForegroundColor('#ff0000').setBold(true).setFontSize(20)
