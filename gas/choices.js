@@ -45,7 +45,7 @@ function getChoices() {
     Logger.log('SpreadSheet created on %s', spreadSheet.getUrl());
 }
 function getTitleAndChoicesWithOther(pageBreak, item) {
-    let choices = null;
+    let choices = undefined;
     let hasMultiple = false;
     let hasOther = false;
     let isText = false;

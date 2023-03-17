@@ -55,7 +55,7 @@ function getChoices() {
 }
 
 function getTitleAndChoicesWithOther(pageBreak: GoogleAppsScript.Forms.PageBreakItem | undefined,  item: GoogleAppsScript.Forms.Item) {
-  let choices: { value: string, goTo?: number }[] | null = null;
+  let choices: { value: string, goTo?: number }[] | undefined = undefined;
   let hasMultiple = false
   let hasOther = false
   let isText = false
