@@ -1,4 +1,5 @@
 data
-out
+out/*
 node_modules
 .venv
+!.keep
