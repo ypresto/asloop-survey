@@ -1,7 +1,6 @@
 /// <reference types="google-apps-script" />
 
 const TABULATION_FILE_URL = 'https://drive.google.com/file/d/1JVa9eE67qMy_mLosfK3thuh-gjDlD05y/view?usp=share_link'
-const START_FROM_INDEX = 6
 
 // Some page break item returns self as getGoToPage().getIndex() while it is actually not
 const DEFAULT_GO_TO_QUESTION_NUMBER_OVERRIDES: Record<number, number> = {
@@ -11,6 +10,13 @@ const DEFAULT_GO_TO_QUESTION_NUMBER_OVERRIDES: Record<number, number> = {
   12: 16,
 }
 
+// TODO: helpText
+
+type SectionHeaderItemType = {
+  kind: 'sectionHeader'
+  title: string
+  helpText: string
+}
 type QuestionItemType = {
   kind: 'question'
   title: string
@@ -24,7 +30,7 @@ type ImageItemType = {
   helpText: string
   imageBlob: GoogleAppsScript.Base.Blob
 }
-type ItemType = QuestionItemType | ImageItemType
+type ItemType = SectionHeaderItemType | QuestionItemType | ImageItemType
 
 type PageType = {
   index: number
@@ -63,18 +69,30 @@ function printTabulation() {
   )
 
   const form = FormApp.getActiveForm()
-  const doc = DocumentApp.create(`${form.getTitle()}-単純集計結果`)
+  const doc = DocumentApp.create(`${form.getTitle()}-単純集計`)
   const body = doc.getBody()
   const context: ContextType = { body, tabulationMap, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap }
 
+  body.appendParagraph('単純集計結果').setHeading(DocumentApp.ParagraphHeading.HEADING1)
+
+  const startPos = pages.findIndex(page => page.items.some(item => item.kind === 'question'))
+  for (const page of pages.slice(startPos)) {
+    renderPage(context, page, false)
+  }
+
+  body.appendParagraph('調査票').setHeading(DocumentApp.ParagraphHeading.HEADING1)
+
+  body.appendParagraph(form.getTitle()).setHeading(DocumentApp.ParagraphHeading.HEADING2)
+  body.appendParagraph(form.getDescription())
+
   for (const page of pages) {
-    renderPage(context, page)
+    renderPage(context, page, true)
   }
 
   Logger.log('Document created on %s', doc.getUrl())
 }
 
-function renderPage(context: ContextType, page: PageType) {
+function renderPage(context: ContextType, page: PageType, isQuestionnaire: boolean) {
   const { body } = context
 
   const heading = body.appendParagraph(page.title)
@@ -84,8 +102,15 @@ function renderPage(context: ContextType, page: PageType) {
 
   for (const item of page.items) {
     switch (item.kind) {
+      case 'sectionHeader':
+        renderSectionHeader(context, item)
+        break
       case 'question':
-        renderQuestionItem(context, page, item)
+        if (isQuestionnaire) {
+          renderQuestionItem(context, page, item)
+        } else {
+          renderQuestionItemTabulation(context, page, item)
+        }
         break
       case 'image':
         renderImageItem(context, item)
@@ -94,8 +119,8 @@ function renderPage(context: ContextType, page: PageType) {
   }
 }
 
-function renderQuestionItem(context: ContextType, page: PageType, item: QuestionItemType) {
-  const { body, tabulationMap, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context
+function renderQuestionItemTabulation(context: ContextType, page: PageType, item: QuestionItemType) {
+  const { body, tabulationMap } = context
   const tabulation = tabulationMap[item.title]
 
   const title = body.appendParagraph(item.number + '. ' + item.title)
@@ -109,15 +134,58 @@ function renderQuestionItem(context: ContextType, page: PageType, item: Question
   body.appendParagraph(`(n=${tabulation.n})`).editAsText().setBold(false)
 
   // table
+  renderTable(body, tabulation.table)
+  // Table always inserts next paragraph.
+  const paragraphAfterTable = body.getChild(body.getNumChildren() - 1)
+
+  renderQuestionBranching(context, page, item)
+
+  paragraphAfterTable.removeFromParent()
+}
+
+function renderQuestionItem(context: ContextType, page: PageType, item: QuestionItemType) {
+  const { body } = context
+
+  const title = body.appendParagraph(item.number + '. ' + item.title)
+  title.asText().setBold(true)
+  const styleGuard = body.appendParagraph('').editAsText().setBold(false)
+
+  // table
+  const values = item.choices?.map(choice => choice.value) ?? []
+  if (values.length > 0 && values.every(v => isNumericString(v))) {
+    const nums = values.map(v => Number(v))
+    const min = nums.reduce((cur, v) => Math.min(cur, v), Infinity)
+    const max = nums.reduce((cur, v) => Math.max(cur, v), -Infinity)
+    if (nums.every((num, i) => num === i + min)) {
+      // continuous number
+      renderTable(body, [[`[   ] (${min}~${max}までの年齢を選択)`]])
+    } else {
+      renderTable(body, values.map(value => [value]) ?? [])
+    }
+  } else {
+    renderTable(body, values.map(value => [value]) ?? [])
+  }
+  // Table always inserts next paragraph.
+  const paragraphAfterTable = body.getChild(body.getNumChildren() - 1)
+
+  renderQuestionBranching(context, page, item)
+
+  paragraphAfterTable.removeFromParent()
+  styleGuard.removeFromParent()
+}
+
+function isNumericString(v: string): boolean {
+  return !!v && !Number.isNaN(Number(v))
+}
+
+function renderTable(body: GoogleAppsScript.Document.Body, tableData: string[][]) {
   const paddingAttrs = {
     [DocumentApp.Attribute.PADDING_TOP]: 2,
     [DocumentApp.Attribute.PADDING_BOTTOM]: 2,
     [DocumentApp.Attribute.PADDING_RIGHT]: 8,
     [DocumentApp.Attribute.PADDING_LEFT]: 8,
   }
-  const table = body.appendTable(tabulation.table)
-  // Table always inserts next paragraph.
-  const paragraphAfterTable = body.getChild(body.getNumChildren() - 1)
+  const table = body.appendTable(tableData)
   const numRows = table.getNumRows()
   for (let i = 0; i < numRows; i++) {
     const row = table.getRow(i)
@@ -127,9 +195,11 @@ function renderQuestionItem(context: ContextType, page: PageType, item: Question
       cell.setAttributes(paddingAttrs)
     }
   }
+}
 
-  // question branching
-
+// question branching
+function renderQuestionBranching(context: ContextType, page: PageType, item: QuestionItemType) {
+  const { body, tabulationMap, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context
   // ページのデフォルトの遷移先は、ページ内の最後の質問にだけ表示
   const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number
   let branches = item.choices?.slice() ?? []
@@ -198,8 +268,15 @@ function renderQuestionItem(context: ContextType, page: PageType, item: Question
   if (!isNewlineInserted) {
     body.appendParagraph('')
   }
+}
 
-  paragraphAfterTable.removeFromParent()
+function renderSectionHeader(context: ContextType, item: SectionHeaderItemType) {
+  const { body } = context
+
+  const title = body.appendParagraph(item.title)
+  title.asText().setBold(true)
+  if (item.helpText) body.appendParagraph(item.helpText).editAsText().setBold(false)
+  body.appendParagraph('').editAsText().setBold(false)
 }
 
 function renderImageItem(context: ContextType, item: ImageItemType) {
@@ -226,8 +303,6 @@ function loadFormPages() {
   let questionNumber = 1
 
   for (const item of form.getItems()) {
-    if (item.getIndex() < START_FROM_INDEX) continue
-
     if (item.getType() === FormApp.ItemType.PAGE_BREAK) {
       const pageBreakItem = item.asPageBreakItem()
       lastPageBreak = pageBreakItem
@@ -242,14 +317,42 @@ function loadFormPages() {
 
     const page = pages[pages.length - 1]
     if (itemAcceptsResponseSet.has(item.getType())) {
+      const choices =
+        item.getType() === FormApp.ItemType.SCALE
+          ? (() => {
+              const scale = item.asScaleItem()
+              const values = [...Array(scale.getUpperBound() - scale.getLowerBound() + 1)]
+                .map((_, i) => i + scale.getLowerBound())
+                .map(num => num.toString())
+              values[0] += ` (${scale.getRightLabel()})`
+              values[values.length - 1] += ` (${scale.getRightLabel()})`
+              return values.map(value => ({ value }))
+            })()
+          : (() => {
+              const parsed = getTitleAndChoicesWithOther(lastPageBreak, item)
+              if (parsed.isText) return [{ value: '(自由記述)' }]
+              return parsed.choices?.map(c => ({
+                value: c.value,
+                goTo: c.goTo,
+              }))
+            })()
       page.items.push({
         kind: 'question',
         title: item.getTitle(),
         helpText: item.getHelpText(),
-        choices: getTitleAndChoicesWithOther(lastPageBreak, item).choices?.map(c => ({ value: c.value, goTo: c.goTo })),
+        choices,
         number: questionNumber++,
       })
       continue
+    }
+
+    if (item.getType() == FormApp.ItemType.SECTION_HEADER) {
+      const sectionHeaderItem = item.asSectionHeaderItem()
+      page.items.push({
+        kind: 'sectionHeader',
+        title: sectionHeaderItem.getTitle(),
+        helpText: sectionHeaderItem.getHelpText(),
+      })
     }
 
     if (item.getType() == FormApp.ItemType.IMAGE) {
