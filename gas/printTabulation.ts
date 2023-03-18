@@ -10,8 +10,6 @@ const DEFAULT_GO_TO_QUESTION_NUMBER_OVERRIDES: Record<number, number> = {
   12: 16,
 }
 
-// TODO: helpText
-
 type SectionHeaderItemType = {
   kind: 'sectionHeader'
   title: string
@@ -75,6 +73,7 @@ function printTabulation() {
 
   body.appendParagraph('単純集計結果').setHeading(DocumentApp.ParagraphHeading.HEADING1)
 
+  // TODO: fix this
   const startPos = pages.findIndex(page => page.items.some(item => item.kind === 'question'))
   for (const page of pages.slice(startPos)) {
     renderPage(context, page, false)
@@ -148,6 +147,7 @@ function renderQuestionItem(context: ContextType, page: PageType, item: Question
 
   const title = body.appendParagraph(item.number + '. ' + item.title)
   title.asText().setBold(true)
+  if (item.helpText) body.appendParagraph(item.helpText).editAsText().setBold(false)
   const styleGuard = body.appendParagraph('').editAsText().setBold(false)
 
   // table
@@ -199,7 +199,7 @@ function renderTable(body: GoogleAppsScript.Document.Body, tableData: string[][]
 
 // question branching
 function renderQuestionBranching(context: ContextType, page: PageType, item: QuestionItemType) {
-  const { body, tabulationMap, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context
+  const { body, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context
   // ページのデフォルトの遷移先は、ページ内の最後の質問にだけ表示
   const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number
   let branches = item.choices?.slice() ?? []
@@ -282,7 +282,11 @@ function renderSectionHeader(context: ContextType, item: SectionHeaderItemType) 
 function renderImageItem(context: ContextType, item: ImageItemType) {
   const { body } = context
 
-  body.appendParagraph(item.title)
+  const title = body.appendParagraph(item.title)
+  title.asText().setBold(true)
+  if (item.helpText) body.appendParagraph(item.helpText).editAsText().setBold(false)
+  const styleGuard = body.appendParagraph('').editAsText().setBold(false)
+
   const imageContainer = body.appendParagraph('')
   const image = imageContainer.appendInlineImage(item.imageBlob)
   const height = image.getHeight()
@@ -292,6 +296,8 @@ function renderImageItem(context: ContextType, item: ImageItemType) {
   image.setHeight((newWidth / width) * height)
   body.appendParagraph('')
   imageContainer.setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+
+  styleGuard.removeFromParent()
 }
 
 function loadFormPages() {

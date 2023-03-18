@@ -34,6 +34,7 @@ function printTabulation() {
     const body = doc.getBody();
     const context = { body, tabulationMap, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap };
     body.appendParagraph('単純集計結果').setHeading(DocumentApp.ParagraphHeading.HEADING1);
+    // TODO: fix this
     const startPos = pages.findIndex(page => page.items.some(item => item.kind === 'question'));
     for (const page of pages.slice(startPos)) {
         renderPage(context, page, false);
@@ -95,6 +96,8 @@ function renderQuestionItem(context, page, item) {
     const { body } = context;
     const title = body.appendParagraph(item.number + '. ' + item.title);
     title.asText().setBold(true);
+    if (item.helpText)
+        body.appendParagraph(item.helpText).editAsText().setBold(false);
     const styleGuard = body.appendParagraph('').editAsText().setBold(false);
     // table
     const values = (_b = (_a = item.choices) === null || _a === void 0 ? void 0 : _a.map(choice => choice.value)) !== null && _b !== void 0 ? _b : [];
@@ -143,7 +146,7 @@ function renderTable(body, tableData) {
 // question branching
 function renderQuestionBranching(context, page, item) {
     var _a, _b, _c;
-    const { body, tabulationMap, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context;
+    const { body, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context;
     // ページのデフォルトの遷移先は、ページ内の最後の質問にだけ表示
     const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number;
     let branches = (_b = (_a = item.choices) === null || _a === void 0 ? void 0 : _a.slice()) !== null && _b !== void 0 ? _b : [];
@@ -217,7 +220,11 @@ function renderSectionHeader(context, item) {
 }
 function renderImageItem(context, item) {
     const { body } = context;
-    body.appendParagraph(item.title);
+    const title = body.appendParagraph(item.title);
+    title.asText().setBold(true);
+    if (item.helpText)
+        body.appendParagraph(item.helpText).editAsText().setBold(false);
+    const styleGuard = body.appendParagraph('').editAsText().setBold(false);
     const imageContainer = body.appendParagraph('');
     const image = imageContainer.appendInlineImage(item.imageBlob);
     const height = image.getHeight();
@@ -227,6 +234,7 @@ function renderImageItem(context, item) {
     image.setHeight((newWidth / width) * height);
     body.appendParagraph('');
     imageContainer.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+    styleGuard.removeFromParent();
 }
 function loadFormPages() {
     var _a;
