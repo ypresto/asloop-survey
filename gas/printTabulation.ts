@@ -125,13 +125,16 @@ function renderQuestionItemTabulation(context: ContextType, page: PageType, item
   const title = body.appendParagraph(item.number + '. ' + item.title)
   title.asText().setBold(true)
   if (item.helpText) body.appendParagraph(item.helpText).editAsText().setBold(false)
+  const styleGuard = body.appendParagraph('').editAsText().setBold(false)
 
   if (!tabulation) {
     const warning = body.appendParagraph('集計情報が見つかりません')
     warning.editAsText().setForegroundColor('#ff0000').setBold(true).setFontSize(20)
     return
   }
-  body.appendParagraph(`(n=${tabulation.n})`).editAsText().setBold(false)
+  if (!tabulation.table[0][0].includes('自由記述')) {
+    body.appendParagraph(`(n=${tabulation.n})`)
+  }
 
   // table
   renderTable(body, tabulation.table)
@@ -141,6 +144,7 @@ function renderQuestionItemTabulation(context: ContextType, page: PageType, item
   renderQuestionBranching(context, page, item)
 
   paragraphAfterTable.removeFromParent()
+  styleGuard.removeFromParent()
 }
 
 function renderQuestionItem(context: ContextType, page: PageType, item: QuestionItemType) {
