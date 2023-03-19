@@ -319,6 +319,7 @@ function loadFormPages() {
         defaultGoTo: pageBreakItem.getGoToPage()?.getIndex(),
         items: [],
       })
+      continue
     }
 
     const page = pages[pages.length - 1]
@@ -359,6 +360,7 @@ function loadFormPages() {
         title: sectionHeaderItem.getTitle(),
         helpText: sectionHeaderItem.getHelpText(),
       })
+      continue
     }
 
     if (item.getType() == FormApp.ItemType.IMAGE) {
@@ -369,7 +371,10 @@ function loadFormPages() {
         helpText: imageItem.getHelpText(),
         imageBlob: imageItem.getImage(),
       })
+      continue
     }
+
+    Logger.log(`Unsupported item type ${item.getType()}`)
   }
 
   return pages

@@ -253,6 +253,7 @@ function loadFormPages() {
                 defaultGoTo: (_a = pageBreakItem.getGoToPage()) === null || _a === void 0 ? void 0 : _a.getIndex(),
                 items: [],
             });
+            continue;
         }
         const page = pages[pages.length - 1];
         if (itemAcceptsResponseSet.has(item.getType())) {
@@ -292,6 +293,7 @@ function loadFormPages() {
                 title: sectionHeaderItem.getTitle(),
                 helpText: sectionHeaderItem.getHelpText(),
             });
+            continue;
         }
         if (item.getType() == FormApp.ItemType.IMAGE) {
             const imageItem = item.asImageItem();
@@ -301,7 +303,9 @@ function loadFormPages() {
                 helpText: imageItem.getHelpText(),
                 imageBlob: imageItem.getImage(),
             });
+            continue;
         }
+        Logger.log(`Unsupported item type ${item.getType()}`);
     }
     return pages;
 }
