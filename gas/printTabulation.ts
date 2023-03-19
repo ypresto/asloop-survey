@@ -332,7 +332,7 @@ function loadFormPages() {
               const values = [...Array(scale.getUpperBound() - scale.getLowerBound() + 1)]
                 .map((_, i) => i + scale.getLowerBound())
                 .map(num => num.toString())
-              values[0] += ` (${scale.getRightLabel()})`
+              values[0] += ` (${scale.getLeftLabel()})`
               values[values.length - 1] += ` (${scale.getRightLabel()})`
               return values.map(value => ({ value }))
             })()
