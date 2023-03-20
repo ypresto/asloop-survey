@@ -10,6 +10,7 @@ type SectionHeaderItemType = {
 type ChoiceType = {
   value: string
   goTo?: number
+  isOther?: boolean
 }
 
 type QuestionItemType = {
@@ -221,6 +222,9 @@ function renderQuestionBranching(context: ContextType, page: PageType, item: Que
   // ページのデフォルトの遷移先は、ページ内の最後の質問にだけ表示
   const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number
   let branches = item.choices?.slice() ?? []
+  // There is no interface to access goToPage of other option: https://issuetracker.google.com/issues/36763602
+  // Treat it like skip answer.
+  branches = branches.map(choice => (choice.isOther ? { ...choice, goTo: page.defaultGoTo } : choice)) ?? []
   if (isLastQuestion) {
     branches.push({ value: '回答しない', goTo: page.defaultGoTo })
   }
@@ -359,7 +363,7 @@ function loadFormPages() {
                   goTo: c.goTo,
                 })
               )
-              if (parsed.hasOther) result?.push({ value: 'その他' })
+              if (parsed.hasOther) result?.push({ value: 'その他', isOther: true })
               return result
             })()
       page.items.push({

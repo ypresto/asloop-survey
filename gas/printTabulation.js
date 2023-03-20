@@ -159,11 +159,14 @@ function renderTable(body, tableData) {
 }
 // question branching
 function renderQuestionBranching(context, page, item) {
-    var _a, _b;
+    var _a, _b, _c;
     const { body, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context;
     // ページのデフォルトの遷移先は、ページ内の最後の質問にだけ表示
     const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number;
     let branches = (_b = (_a = item.choices) === null || _a === void 0 ? void 0 : _a.slice()) !== null && _b !== void 0 ? _b : [];
+    // There is no interface to access goToPage of other option: https://issuetracker.google.com/issues/36763602
+    // Treat it like skip answer.
+    branches = (_c = branches.map(choice => (choice.isOther ? Object.assign(Object.assign({}, choice), { goTo: page.defaultGoTo }) : choice))) !== null && _c !== void 0 ? _c : [];
     if (isLastQuestion) {
         branches.push({ value: '回答しない', goTo: page.defaultGoTo });
     }
@@ -287,7 +290,7 @@ function loadFormPages() {
                         goTo: c.goTo,
                     }));
                     if (parsed.hasOther)
-                        result === null || result === void 0 ? void 0 : result.push({ value: 'その他' });
+                        result === null || result === void 0 ? void 0 : result.push({ value: 'その他', isOther: true });
                     return result;
                 })();
             page.items.push({
