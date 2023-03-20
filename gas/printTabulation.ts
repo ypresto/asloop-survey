@@ -15,11 +15,16 @@ type SectionHeaderItemType = {
   title: string
   helpText: string
 }
+type ChoiceType = {
+  value: string
+  goTo?: number
+}
+
 type QuestionItemType = {
   kind: 'question'
   title: string
   helpText: string
-  choices?: { value: string; goTo?: number }[]
+  choices?: ChoiceType[]
   number: number
 }
 type ImageItemType = {
@@ -364,10 +369,14 @@ function loadFormPages() {
           : (() => {
               const parsed = getTitleAndChoicesWithOther(lastPageBreak, item)
               if (parsed.isText) return [{ value: '(自由記述)' }]
-              return parsed.choices?.map(c => ({
-                value: c.value,
-                goTo: c.goTo,
-              }))
+              const result = parsed.choices?.map(
+                (c): ChoiceType => ({
+                  value: c.value,
+                  goTo: c.goTo,
+                })
+              )
+              if (parsed.hasOther) result?.push({ value: 'その他' })
+              return result
             })()
       page.items.push({
         kind: 'question',

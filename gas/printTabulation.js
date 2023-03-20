@@ -299,10 +299,13 @@ function loadFormPages() {
                     const parsed = getTitleAndChoicesWithOther(lastPageBreak, item);
                     if (parsed.isText)
                         return [{ value: '(自由記述)' }];
-                    return (_a = parsed.choices) === null || _a === void 0 ? void 0 : _a.map(c => ({
+                    const result = (_a = parsed.choices) === null || _a === void 0 ? void 0 : _a.map((c) => ({
                         value: c.value,
                         goTo: c.goTo,
                     }));
+                    if (parsed.hasOther)
+                        result === null || result === void 0 ? void 0 : result.push({ value: 'その他' });
+                    return result;
                 })();
             page.items.push({
                 kind: 'question',
