@@ -2,14 +2,6 @@
 
 const TABULATION_FILE_URL = 'https://drive.google.com/file/d/1JVa9eE67qMy_mLosfK3thuh-gjDlD05y/view?usp=share_link'
 
-// Some page break item returns self as getGoToPage().getIndex() while it is actually not
-const DEFAULT_GO_TO_QUESTION_NUMBER_OVERRIDES: Record<number, number> = {
-  // 7. 現在、収入をともなう仕事をしていますか。 → 12. 出生時の性別と、現在自分が捉えている性別が「一致」していると思いますか。
-  7: 12,
-  // 12. 出生時の性別と、現在自分が捉えている性別が「一致」していると思いますか。 → 16. 特定の人と「付き合いたい」と思うことがありますか。
-  12: 16,
-}
-
 type SectionHeaderItemType = {
   kind: 'sectionHeader'
   title: string
@@ -39,6 +31,7 @@ type PageType = {
   index: number
   title: string
   description: string
+  // This is for at the end of *this* page, while PageBreakItem.getGoToPage() is for at the end of *previous* page.
   defaultGoTo?: number
   items: ItemType[]
 }
@@ -229,16 +222,7 @@ function renderQuestionBranching(context: ContextType, page: PageType, item: Que
   const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number
   let branches = item.choices?.slice() ?? []
   if (isLastQuestion) {
-    const overrideNumber = DEFAULT_GO_TO_QUESTION_NUMBER_OVERRIDES[item.number]
-    if (overrideNumber != null) {
-      const index = Object.entries(pageIndexToQuestionNumberMap).find(([, num]) => num === overrideNumber)?.[0]
-      if (index == null) {
-        throw new Error(`Page index for question number ${item.number} is not found.`)
-      }
-      branches.push({ value: '回答しない', goTo: Number(index) })
-    } else {
-      branches.push({ value: '回答しない', goTo: page.defaultGoTo })
-    }
+    branches.push({ value: '回答しない', goTo: page.defaultGoTo })
   }
 
   let isNewlineInserted = false
@@ -343,11 +327,11 @@ function loadFormPages() {
     if (item.getType() === FormApp.ItemType.PAGE_BREAK) {
       const pageBreakItem = item.asPageBreakItem()
       lastPageBreak = pageBreakItem
+      pages[pages.length - 1].defaultGoTo = pageBreakItem.getGoToPage()?.getIndex()
       pages.push({
         index: item.getIndex(),
         title: item.getTitle(),
         description: item.getHelpText(),
-        defaultGoTo: pageBreakItem.getGoToPage()?.getIndex(),
         items: [],
       })
       continue

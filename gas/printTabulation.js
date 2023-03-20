@@ -1,13 +1,6 @@
 "use strict";
 /// <reference types="google-apps-script" />
 const TABULATION_FILE_URL = 'https://drive.google.com/file/d/1JVa9eE67qMy_mLosfK3thuh-gjDlD05y/view?usp=share_link';
-// Some page break item returns self as getGoToPage().getIndex() while it is actually not
-const DEFAULT_GO_TO_QUESTION_NUMBER_OVERRIDES = {
-    // 7. 現在、収入をともなう仕事をしていますか。 → 12. 出生時の性別と、現在自分が捉えている性別が「一致」していると思いますか。
-    7: 12,
-    // 12. 出生時の性別と、現在自分が捉えている性別が「一致」していると思いますか。 → 16. 特定の人と「付き合いたい」と思うことがありますか。
-    12: 16,
-};
 function printTabulation() {
     const pages = loadFormPages();
     const tabulations = loadTabulations();
@@ -166,23 +159,13 @@ function renderTable(body, tableData) {
 }
 // question branching
 function renderQuestionBranching(context, page, item) {
-    var _a, _b, _c;
+    var _a, _b;
     const { body, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context;
     // ページのデフォルトの遷移先は、ページ内の最後の質問にだけ表示
     const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number;
     let branches = (_b = (_a = item.choices) === null || _a === void 0 ? void 0 : _a.slice()) !== null && _b !== void 0 ? _b : [];
     if (isLastQuestion) {
-        const overrideNumber = DEFAULT_GO_TO_QUESTION_NUMBER_OVERRIDES[item.number];
-        if (overrideNumber != null) {
-            const index = (_c = Object.entries(pageIndexToQuestionNumberMap).find(([, num]) => num === overrideNumber)) === null || _c === void 0 ? void 0 : _c[0];
-            if (index == null) {
-                throw new Error(`Page index for question number ${item.number} is not found.`);
-            }
-            branches.push({ value: '回答しない', goTo: Number(index) });
-        }
-        else {
-            branches.push({ value: '回答しない', goTo: page.defaultGoTo });
-        }
+        branches.push({ value: '回答しない', goTo: page.defaultGoTo });
     }
     let isNewlineInserted = false;
     // 全ての選択肢が同じ遷移先の場合は一括表示
@@ -273,11 +256,11 @@ function loadFormPages() {
         if (item.getType() === FormApp.ItemType.PAGE_BREAK) {
             const pageBreakItem = item.asPageBreakItem();
             lastPageBreak = pageBreakItem;
+            pages[pages.length - 1].defaultGoTo = (_a = pageBreakItem.getGoToPage()) === null || _a === void 0 ? void 0 : _a.getIndex();
             pages.push({
                 index: item.getIndex(),
                 title: item.getTitle(),
                 description: item.getHelpText(),
-                defaultGoTo: (_a = pageBreakItem.getGoToPage()) === null || _a === void 0 ? void 0 : _a.getIndex(),
                 items: [],
             });
             continue;
