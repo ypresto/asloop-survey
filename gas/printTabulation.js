@@ -11,7 +11,8 @@ const DEFAULT_GO_TO_QUESTION_NUMBER_OVERRIDES = {
 function printTabulation() {
     const pages = loadFormPages();
     const tabulations = loadTabulations();
-    const tabulationMap = Object.fromEntries(tabulations.map(t => [t.title, t]));
+    const dupeTitleCountMapForInit = {};
+    const tabulationMap = Object.fromEntries(tabulations.map(t => [getTitleForRef(dupeTitleCountMapForInit, t.title), t]));
     const pageIndexToQuestionNumberMap = Object.fromEntries(pages.map(page => {
         var _a, _b;
         return [
@@ -32,18 +33,30 @@ function printTabulation() {
     const form = FormApp.getActiveForm();
     const doc = DocumentApp.create(`${form.getTitle()}-単純集計`);
     const body = doc.getBody();
-    const context = { body, tabulationMap, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap };
+    const context = {
+        body,
+        tabulationMap,
+        pageIndexToQuestionNumberMap,
+        pageIndexToLastQuestionNumberMap,
+        dupeTitleCountMap: {},
+    };
     body.appendParagraph('単純集計結果').setHeading(DocumentApp.ParagraphHeading.HEADING1);
-    // TODO: fix this
-    const startPos = pages.findIndex(page => page.items.some(item => item.kind === 'question'));
-    for (const page of pages.slice(startPos)) {
+    const firstPage = pages[0];
+    for (const page of pages) {
+        if (page === firstPage) {
+            // from first question
+            const startPos = page.items.findIndex(item => item.kind === 'question');
+            renderPage(context, Object.assign(Object.assign({}, page), { items: page.items.slice(startPos) }), false);
+            continue;
+        }
         renderPage(context, page, false);
     }
     body.appendParagraph('調査票').setHeading(DocumentApp.ParagraphHeading.HEADING1);
     body.appendParagraph(form.getTitle()).setHeading(DocumentApp.ParagraphHeading.HEADING2);
     body.appendParagraph(form.getDescription());
+    const context2 = Object.assign(Object.assign({}, context), { dupeTitleCountMap: {} });
     for (const page of pages) {
-        renderPage(context, page, true);
+        renderPage(context2, page, true);
     }
     Logger.log('Document created on %s', doc.getUrl());
 }
@@ -74,22 +87,29 @@ function renderPage(context, page, isQuestionnaire) {
     }
 }
 function renderQuestionItemTabulation(context, page, item) {
-    const { body, tabulationMap } = context;
-    const tabulation = tabulationMap[item.title];
+    const { body, tabulationMap, dupeTitleCountMap } = context;
+    const titleForRef = getTitleForRef(dupeTitleCountMap, item.title);
+    const tabulation = tabulationMap[titleForRef];
     const title = body.appendParagraph(item.number + '. ' + item.title);
     title.asText().setBold(true);
+    if (item.helpText)
+        body.appendParagraph(item.helpText).editAsText().setBold(false);
+    const styleGuard = body.appendParagraph('').editAsText().setBold(false);
     if (!tabulation) {
         const warning = body.appendParagraph('集計情報が見つかりません');
         warning.editAsText().setForegroundColor('#ff0000').setBold(true).setFontSize(20);
         return;
     }
-    body.appendParagraph(`(n=${tabulation.n})`).editAsText().setBold(false);
+    if (!tabulation.table[0][0].includes('自由記述')) {
+        body.appendParagraph(`(n=${tabulation.n})`);
+    }
     // table
     renderTable(body, tabulation.table);
     // Table always inserts next paragraph.
     const paragraphAfterTable = body.getChild(body.getNumChildren() - 1);
     renderQuestionBranching(context, page, item);
     paragraphAfterTable.removeFromParent();
+    styleGuard.removeFromParent();
 }
 function renderQuestionItem(context, page, item) {
     var _a, _b, _c, _d;
@@ -236,6 +256,12 @@ function renderImageItem(context, item) {
     imageContainer.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
     styleGuard.removeFromParent();
 }
+function getTitleForRef(dupTitleCountMap, title) {
+    var _a;
+    (_a = dupTitleCountMap[title]) !== null && _a !== void 0 ? _a : (dupTitleCountMap[title] = 0);
+    const titleCount = ++dupTitleCountMap[title];
+    return titleCount === 1 ? title : `${title} -- ${titleCount}`;
+}
 function loadFormPages() {
     var _a;
     const form = FormApp.getActiveForm();
@@ -263,7 +289,7 @@ function loadFormPages() {
                     const values = [...Array(scale.getUpperBound() - scale.getLowerBound() + 1)]
                         .map((_, i) => i + scale.getLowerBound())
                         .map(num => num.toString());
-                    values[0] += ` (${scale.getRightLabel()})`;
+                    values[0] += ` (${scale.getLeftLabel()})`;
                     values[values.length - 1] += ` (${scale.getRightLabel()})`;
                     return values.map(value => ({ value }));
                 })()

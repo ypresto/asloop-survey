@@ -43,13 +43,15 @@ type ContextType = {
   tabulationMap: Record<string, TabulationType>
   pageIndexToQuestionNumberMap: Record<number, number | null>
   pageIndexToLastQuestionNumberMap: Record<number, number | null>
+  dupeTitleCountMap: Record<string, number>
 }
 
 function printTabulation() {
   const pages = loadFormPages()
   const tabulations = loadTabulations()
 
-  const tabulationMap = Object.fromEntries(tabulations.map(t => [t.title, t]))
+  const dupeTitleCountMapForInit: Record<string, number> = {}
+  const tabulationMap = Object.fromEntries(tabulations.map(t => [getTitleForRef(dupeTitleCountMapForInit, t.title), t]))
   const pageIndexToQuestionNumberMap = Object.fromEntries(
     pages.map(page => [
       page.index,
@@ -69,13 +71,24 @@ function printTabulation() {
   const form = FormApp.getActiveForm()
   const doc = DocumentApp.create(`${form.getTitle()}-単純集計`)
   const body = doc.getBody()
-  const context: ContextType = { body, tabulationMap, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap }
+  const context: ContextType = {
+    body,
+    tabulationMap,
+    pageIndexToQuestionNumberMap,
+    pageIndexToLastQuestionNumberMap,
+    dupeTitleCountMap: {},
+  }
 
   body.appendParagraph('単純集計結果').setHeading(DocumentApp.ParagraphHeading.HEADING1)
 
-  // TODO: fix this
-  const startPos = pages.findIndex(page => page.items.some(item => item.kind === 'question'))
-  for (const page of pages.slice(startPos)) {
+  const firstPage = pages[0]
+  for (const page of pages) {
+    if (page === firstPage) {
+      // from first question
+      const startPos = page.items.findIndex(item => item.kind === 'question')
+      renderPage(context, { ...page, items: page.items.slice(startPos) }, false)
+      continue
+    }
     renderPage(context, page, false)
   }
 
@@ -84,8 +97,10 @@ function printTabulation() {
   body.appendParagraph(form.getTitle()).setHeading(DocumentApp.ParagraphHeading.HEADING2)
   body.appendParagraph(form.getDescription())
 
+  const context2 = { ...context, dupeTitleCountMap: {} }
+
   for (const page of pages) {
-    renderPage(context, page, true)
+    renderPage(context2, page, true)
   }
 
   Logger.log('Document created on %s', doc.getUrl())
@@ -119,8 +134,9 @@ function renderPage(context: ContextType, page: PageType, isQuestionnaire: boole
 }
 
 function renderQuestionItemTabulation(context: ContextType, page: PageType, item: QuestionItemType) {
-  const { body, tabulationMap } = context
-  const tabulation = tabulationMap[item.title]
+  const { body, tabulationMap, dupeTitleCountMap } = context
+  const titleForRef = getTitleForRef(dupeTitleCountMap, item.title)
+  const tabulation = tabulationMap[titleForRef]
 
   const title = body.appendParagraph(item.number + '. ' + item.title)
   title.asText().setBold(true)
@@ -303,6 +319,12 @@ function renderImageItem(context: ContextType, item: ImageItemType) {
   imageContainer.setAlignment(DocumentApp.HorizontalAlignment.CENTER)
 
   styleGuard.removeFromParent()
+}
+
+function getTitleForRef(dupTitleCountMap: Record<string, number>, title: string): string {
+  dupTitleCountMap[title] ??= 0
+  const titleCount = ++dupTitleCountMap[title]
+  return titleCount === 1 ? title : `${title} -- ${titleCount}`
 }
 
 function loadFormPages() {
