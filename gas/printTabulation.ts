@@ -109,10 +109,9 @@ function printTabulation() {
 function renderPage(context: ContextType, page: PageType, isQuestionnaire: boolean) {
   const { body } = context
 
-  const heading = body.appendParagraph(page.title)
-  heading.setHeading(DocumentApp.ParagraphHeading.HEADING2)
+  if (page.title) body.appendParagraph(page.title).setHeading(DocumentApp.ParagraphHeading.HEADING2)
   if (page.description) body.appendParagraph(page.description)
-  body.appendParagraph('')
+  if (page.title || page.description) body.appendParagraph('')
 
   for (const item of page.items) {
     switch (item.kind) {
