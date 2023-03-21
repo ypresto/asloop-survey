@@ -245,7 +245,7 @@ function renderQuestionBranching(context: ContextType, page: PageType, item: Que
   let hasError = false
 
   for (const choice of branches) {
-    const goTo = choice.goTo ?? page.defaultGoTo
+    const goTo = choice.goTo
     const questionNumber = goTo != null ? pageIndexToQuestionNumberMap[goTo] : item.number + 1
     if (questionNumber == null) {
       lines.push(`ページ index ${goTo} に設問がありません`)
