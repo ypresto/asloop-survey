@@ -170,52 +170,31 @@ function renderQuestionBranching(context, page, item) {
     if (isLastQuestion) {
         branches.push({ value: '回答しない', goTo: page.defaultGoTo });
     }
-    let isNewlineInserted = false;
-    // 全ての選択肢が同じ遷移先の場合は一括表示
-    if (new Set(branches.map(choice => choice.goTo)).size === 1 && branches[0].goTo != null) {
-        const goTo = branches[0].goTo;
-        const questionNumber = pageIndexToQuestionNumberMap[goTo];
-        if (questionNumber == null) {
-            body
-                .appendParagraph(`ページ index ${goTo} に設問がありません`)
-                .editAsText()
-                .setBold(true)
-                .setForegroundColor('#ff0000');
-        }
-        body.appendParagraph(`質問 ${questionNumber} に進む`);
-    }
-    else {
-        // 単に次の質問へ進むものは省く
-        branches = branches.filter(choice => choice.goTo != null && pageIndexToQuestionNumberMap[choice.goTo] !== item.number + 1);
-        if (branches.length > 0) {
-            const lines = [];
-            let hasError = false;
-            for (const choice of branches) {
-                const goTo = choice.goTo;
-                if (goTo != null) {
-                    const questionNumber = pageIndexToQuestionNumberMap[goTo];
-                    if (questionNumber == null) {
-                        lines.push(`ページ index ${goTo} に設問がありません`);
-                        hasError = true;
-                    }
-                    if (questionNumber === item.number) {
-                        lines.push(`ページ index ${goTo} はこの設問自体を指しています`);
-                        hasError = true;
-                    }
-                    lines.push(`${choice.value}: 質問 ${questionNumber} に進む`);
+    // 何を選択してもしなくても次の質問に進む場合は省略
+    if (branches.some(choice => choice.goTo != null && pageIndexToQuestionNumberMap[choice.goTo] !== item.number + 1)) {
+        const lines = [];
+        let hasError = false;
+        for (const choice of branches) {
+            const goTo = choice.goTo;
+            if (goTo != null) {
+                const questionNumber = pageIndexToQuestionNumberMap[goTo];
+                if (questionNumber == null) {
+                    lines.push(`ページ index ${goTo} に設問がありません`);
+                    hasError = true;
                 }
+                if (questionNumber === item.number) {
+                    lines.push(`ページ index ${goTo} はこの設問自体を指しています`);
+                    hasError = true;
+                }
+                lines.push(`${choice.value}: 質問 ${questionNumber} に進む`);
             }
-            const p = body.appendParagraph(lines.join('\n'));
-            body.appendParagraph(''); // prevent from propagating style to next paragraph
-            if (hasError) {
-                p.editAsText().setBold(true).setForegroundColor('#ff0000');
-            }
-            isNewlineInserted = true;
+        }
+        const p = body.appendParagraph(lines.join('\n'));
+        if (hasError) {
+            p.editAsText().setBold(true).setForegroundColor('#ff0000');
         }
     }
-    if (!isNewlineInserted) {
-        body.appendParagraph('');
-    }
+    body.appendParagraph('');
 }
 function renderSectionHeader(context, item) {
     const { body } = context;
