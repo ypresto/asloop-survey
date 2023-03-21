@@ -168,14 +168,16 @@ function renderQuestionBranching(context, page, item) {
     const choices = (_b = (_a = item.choices) === null || _a === void 0 ? void 0 : _a.map((choice, i) => (choice.isOther ? Object.assign(Object.assign({}, choice), { goTo: item.choices[i - 1].goTo }) : choice))) !== null && _b !== void 0 ? _b : [];
     const hasChoiceGoTo = choices.some(choice => !isGoToNextQuestion(choice.goTo));
     const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number;
+    const isRequired = item.title.includes('必須項目'); // We can get it by calling item.asFoobarItem().isRequired but "Foobar" is too many.
     let branches = [];
     // 選択肢自体に遷移先設定があれば、すべて表示
     if (hasChoiceGoTo) {
         branches.push(...choices);
     }
-    // 無回答の場合は、ページ内の最後の質問にだけ表示
+    // 無回答は、ページ内の最後の質問にだけ表示
+    // 必須項目の場合は、無回答にはできないので非表示
     // 選択肢自体に遷移先設定がある場合は、単に次の質問へ遷移する場合も表示
-    if (isLastQuestion && (hasChoiceGoTo || !isGoToNextQuestion(page.defaultGoTo))) {
+    if (isLastQuestion && !isRequired && (hasChoiceGoTo || !isGoToNextQuestion(page.defaultGoTo))) {
         branches.push({ value: '無回答', goTo: page.defaultGoTo });
     }
     const lines = [];
