@@ -223,8 +223,8 @@ function renderQuestionBranching(context: ContextType, page: PageType, item: Que
   const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number
   let branches = item.choices?.slice() ?? []
   // There is no interface to access goToPage of other option: https://issuetracker.google.com/issues/36763602
-  // Treat it like skip answer.
-  branches = branches.map(choice => (choice.isOther ? { ...choice, goTo: page.defaultGoTo } : choice)) ?? []
+  // Use go to page of previous choice.
+  branches = branches.map((choice, i) => (choice.isOther ? { ...choice, goTo: branches[i - 1].goTo } : choice)) ?? []
   if (isLastQuestion) {
     branches.push({ value: '回答しない', goTo: page.defaultGoTo })
   }
