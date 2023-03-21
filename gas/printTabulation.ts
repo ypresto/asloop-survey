@@ -221,39 +221,46 @@ function renderQuestionBranching(context: ContextType, page: PageType, item: Que
   const { body, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context
   // ページのデフォルトの遷移先は、ページ内の最後の質問にだけ表示
   const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number
-  let branches = item.choices?.slice() ?? []
-  // There is no interface to access goToPage of other option: https://issuetracker.google.com/issues/36763602
-  // Use go to page of previous choice.
-  branches = branches.map((choice, i) => (choice.isOther ? { ...choice, goTo: branches[i - 1].goTo } : choice)) ?? []
-  if (isLastQuestion) {
-    branches.push({ value: '回答しない', goTo: page.defaultGoTo })
-  }
+  const branches: ChoiceType[] = []
+
+  const isGoToNextQuestion = (goTo: number | undefined) =>
+    goTo == null || pageIndexToQuestionNumberMap[goTo] === item.number + 1
 
   // 何を選択してもしなくても次の質問に進む場合は省略
-  if (branches.some(choice => choice.goTo != null && pageIndexToQuestionNumberMap[choice.goTo] !== item.number + 1)) {
-    const lines: string[] = []
-    let hasError = false
+  if (item.choices?.some(choice => !isGoToNextQuestion(choice.goTo))) {
+    // There is no interface to access goToPage of other option: https://issuetracker.google.com/issues/36763602
+    // Use go to page of previous choice.
+    branches.push(
+      ...(item.choices.map((choice, i) => (choice.isOther ? { ...choice, goTo: item.choices![i - 1].goTo } : choice)) ??
+        [])
+    )
+  }
 
-    for (const choice of branches) {
-      const goTo = choice.goTo
-      if (goTo != null) {
-        const questionNumber = pageIndexToQuestionNumberMap[goTo]
-        if (questionNumber == null) {
-          lines.push(`ページ index ${goTo} に設問がありません`)
-          hasError = true
-        }
-        if (questionNumber === item.number) {
-          lines.push(`ページ index ${goTo} はこの設問自体を指しています`)
-          hasError = true
-        }
-        lines.push(`${choice.value}: 質問 ${questionNumber} に進む`)
-      }
-    }
+  // 選択肢を表示している場合は、無回答の場合も強制表示
+  if (isLastQuestion && (branches.length > 0 || !isGoToNextQuestion(page.defaultGoTo))) {
+    branches.push({ value: '無回答', goTo: page.defaultGoTo })
+  }
 
-    const p = body.appendParagraph(lines.join('\n'))
-    if (hasError) {
-      p.editAsText().setBold(true).setForegroundColor('#ff0000')
+  const lines: string[] = []
+  let hasError = false
+
+  for (const choice of branches) {
+    const goTo = choice.goTo ?? page.defaultGoTo
+    const questionNumber = goTo != null ? pageIndexToQuestionNumberMap[goTo] : item.number + 1
+    if (questionNumber == null) {
+      lines.push(`ページ index ${goTo} に設問がありません`)
+      hasError = true
     }
+    if (questionNumber === item.number) {
+      lines.push(`ページ index ${goTo} はこの設問自体を指しています`)
+      hasError = true
+    }
+    lines.push(`${choice.value}: 質問 ${questionNumber} に進む`)
+  }
+
+  const p = body.appendParagraph(lines.join('\n'))
+  if (hasError) {
+    p.editAsText().setBold(true).setForegroundColor('#ff0000')
   }
 
   body.appendParagraph('')
