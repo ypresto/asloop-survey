@@ -302,6 +302,12 @@ function loadFormPages() {
         }
         Logger.log(`Unsupported item type ${item.getType()}`);
     }
+    // exclude question
+    for (const page of pages) {
+        if (page.title === '本調査に関する質問') {
+            page.items = page.items.filter(item => item.title !== 'ご意見等をご記入された方は、回答の公開の可否をお答えください。');
+        }
+    }
     return pages;
 }
 function loadTabulations() {
