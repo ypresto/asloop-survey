@@ -159,36 +159,46 @@ function renderTable(body, tableData) {
 }
 // question branching
 function renderQuestionBranching(context, page, item) {
-    var _a, _b, _c;
+    var _a, _b;
     const { body, pageIndexToQuestionNumberMap, pageIndexToLastQuestionNumberMap } = context;
-    // ページのデフォルトの遷移先は、ページ内の最後の質問にだけ表示
+    const getGoToQuestionNumber = (goTo) => goTo != null ? pageIndexToQuestionNumberMap[goTo] : item.number + 1;
+    const isGoToNextQuestion = (goTo) => getGoToQuestionNumber(goTo) === item.number + 1;
+    // There is no interface to access goToPage of other option: https://issuetracker.google.com/issues/36763602
+    // Use go to page of previous choice.
+    const choices = (_b = (_a = item.choices) === null || _a === void 0 ? void 0 : _a.map((choice, i) => (choice.isOther ? Object.assign(Object.assign({}, choice), { goTo: item.choices[i - 1].goTo }) : choice))) !== null && _b !== void 0 ? _b : [];
+    const hasChoiceGoTo = choices.some(choice => !isGoToNextQuestion(choice.goTo));
     const isLastQuestion = pageIndexToLastQuestionNumberMap[page.index] === item.number;
-    const branches = [];
-    const isGoToNextQuestion = (goTo) => goTo == null || pageIndexToQuestionNumberMap[goTo] === item.number + 1;
-    // 何を選択してもしなくても次の質問に進む場合は省略
-    if ((_a = item.choices) === null || _a === void 0 ? void 0 : _a.some(choice => !isGoToNextQuestion(choice.goTo))) {
-        // There is no interface to access goToPage of other option: https://issuetracker.google.com/issues/36763602
-        // Use go to page of previous choice.
-        branches.push(...((_b = item.choices.map((choice, i) => (choice.isOther ? Object.assign(Object.assign({}, choice), { goTo: item.choices[i - 1].goTo }) : choice))) !== null && _b !== void 0 ? _b : []));
+    let branches = [];
+    // 選択肢自体に遷移先設定があれば、すべて表示
+    if (hasChoiceGoTo) {
+        branches.push(...choices);
     }
-    // 選択肢を表示している場合は、無回答の場合も強制表示
-    if (isLastQuestion && (branches.length > 0 || !isGoToNextQuestion(page.defaultGoTo))) {
+    // 無回答の場合は、ページ内の最後の質問にだけ表示
+    // 選択肢自体に遷移先設定がある場合は、単に次の質問へ遷移する場合も表示
+    if (isLastQuestion && (hasChoiceGoTo || !isGoToNextQuestion(page.defaultGoTo))) {
         branches.push({ value: '無回答', goTo: page.defaultGoTo });
     }
     const lines = [];
     let hasError = false;
-    for (const choice of branches) {
-        const goTo = (_c = choice.goTo) !== null && _c !== void 0 ? _c : page.defaultGoTo;
-        const questionNumber = goTo != null ? pageIndexToQuestionNumberMap[goTo] : item.number + 1;
+    // 選択肢自体に遷移先設定がある場合のみ、すべて一緒ならまとめて表示
+    if (hasChoiceGoTo && new Set(branches.map(choice => getGoToQuestionNumber(choice.goTo))).size === 1) {
+        const questionNumber = getGoToQuestionNumber(branches[0].goTo);
         if (questionNumber == null) {
-            lines.push(`ページ index ${goTo} に設問がありません`);
+            lines.push(`ページ index ${branches[0].goTo} に設問がありません`);
             hasError = true;
         }
-        if (questionNumber === item.number) {
-            lines.push(`ページ index ${goTo} はこの設問自体を指しています`);
-            hasError = true;
+        lines.push(`質問 ${questionNumber} に進む`);
+    }
+    else {
+        for (const choice of branches) {
+            const goTo = choice.goTo;
+            const questionNumber = getGoToQuestionNumber(goTo);
+            if (questionNumber == null) {
+                lines.push(`ページ index ${goTo} に設問がありません`);
+                hasError = true;
+            }
+            lines.push(`${choice.value}: 質問 ${questionNumber} に進む`);
         }
-        lines.push(`${choice.value}: 質問 ${questionNumber} に進む`);
     }
     const p = body.appendParagraph(lines.join('\n'));
     if (hasError) {
