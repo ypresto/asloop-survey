@@ -60,7 +60,7 @@ def adjust_figure_for_h(figure: Figure, n: int | None, title: str, description: 
     ax.yaxis.grid(False)
     ax.margins(y=0.05)
     if percent:
-        ax.xaxis.set_major_formatter(ticker.PercentFormatter())
+        ax.xaxis.set_major_formatter(ticker.PercentFormatter(decimals=0))
         ax.xaxis.set_major_locator(percent_locator)
         if bar_label:
             for container in ax.containers:
@@ -89,7 +89,7 @@ def adjust_figure_for_h_stack(figure: Figure, n: int | None, title: str = '', de
     ax.invert_xaxis()
     # -1 for prevent tick label from being clipped by frame.
     ax.set_xlim(xmin=100, xmax=-3, auto=None)
-    ax.xaxis.set_major_formatter(ReversePercentFormatter())
+    ax.xaxis.set_major_formatter(ReversePercentFormatter(decimals=0))
     container: BarContainer
 
     for i, container in enumerate(reversed(ax.containers)):
