@@ -1,6 +1,7 @@
 /// <reference types="google-apps-script" />
 
-const FULL_TABULATION_FOLDER_ID = '1JHG9FdFekJqjN9KqPd1NhwvXCwRNaw85'
+const FULL_TABULATION_ZIP_FILE_URL =
+  'https://drive.google.com/file/d/1WOblm8N7eh0doZxbnKYlC0kvXT-PcHN4/view?usp=drive_link'
 
 interface FullTabulationFigureType {
   title: string
@@ -64,7 +65,7 @@ function printFullTabulation() {
 function renderFigureImage(body: GoogleAppsScript.Document.Body, imageName: string) {
   const imageContainer = body.appendParagraph('')
 
-  const image = imageContainer.appendInlineImage(getFileInFullTabFolder(imageName))
+  const image = imageContainer.appendInlineImage(getFullTabBlobNamed(imageName))
   const height = image.getHeight()
   const width = image.getWidth()
   const newWidth = Math.min(width, 480)
@@ -74,15 +75,19 @@ function renderFigureImage(body: GoogleAppsScript.Document.Body, imageName: stri
 }
 
 function loadFullTabulationRecords() {
-  const json = getFileInFullTabFolder('full_tabulation.json').getBlob().getDataAsString()
+  const json = getFullTabBlobNamed('full_tabulation.json').getDataAsString()
   return JSON.parse(json) as FullTabulationRecordType[]
 }
 
-let cachedFolder: GoogleAppsScript.Drive.Folder
+let cachedFileMap: Record<string, GoogleAppsScript.Base.Blob>
 
-function getFileInFullTabFolder(name: string) {
-  if (!cachedFolder) {
-    cachedFolder = DriveApp.getFolderById(FULL_TABULATION_FOLDER_ID)
+function getFullTabBlobNamed(name: string) {
+  if (!cachedFileMap) {
+    const zipFile = DriveApp.getFileById(getIdFromUrl(FULL_TABULATION_ZIP_FILE_URL))
+    const blobs = Utilities.unzip(zipFile.getBlob())
+    cachedFileMap = Object.fromEntries(blobs.map(blob => [blob.getName(), blob]))
   }
-  return cachedFolder.getFilesByName(name).next()
+  const file = cachedFileMap[`full_tabulation/${name}`]
+  if (!file) throw new Error(`File not found: ${name}`)
+  return file
 }
