@@ -1,15 +1,25 @@
 "use strict";
 /// <reference types="google-apps-script" />
 const FULL_TABULATION_ZIP_FILE_URL = 'https://drive.google.com/file/d/1WOblm8N7eh0doZxbnKYlC0kvXT-PcHN4/view?usp=drive_link';
-function printFullTabulation() {
-    var _a;
-    const records = loadFullTabulationRecords();
-    const doc = DocumentApp.create('調査結果報告書2022');
+const FULL_TABULATION_OUTPUT_DOCUMENT_URL = 'https://docs.google.com/document/d/1eg2UVCecZB6iLBMyus_HZpod1PqgauyalcyjWVTEvf8/edit';
+function printFullTabulationPage1() {
+    printFullTabulationImpl(1);
+}
+function printFullTabulationPage2() {
+    printFullTabulationImpl(2);
+}
+function printFullTabulationImpl(page) {
+    var _a, _b, _c;
+    const batchSize = 200;
+    const allRecords = loadFullTabulationRecords();
+    const records = allRecords.slice((page - 1) * batchSize, page * batchSize);
+    const prevRecord = allRecords[(page - 1) * batchSize - 1];
+    const doc = DocumentApp.openByUrl(FULL_TABULATION_OUTPUT_DOCUMENT_URL);
     const body = doc.getBody();
     const context = { body };
     body.appendParagraph('Ⅱ 調査の結果').setHeading(DocumentApp.ParagraphHeading.HEADING1);
-    let currentH1 = '';
-    let currentH2 = '';
+    let currentH1 = (_a = prevRecord === null || prevRecord === void 0 ? void 0 : prevRecord.h1) !== null && _a !== void 0 ? _a : '';
+    let currentH2 = (_b = prevRecord === null || prevRecord === void 0 ? void 0 : prevRecord.h2) !== null && _b !== void 0 ? _b : '';
     for (const tabulation of records) {
         if (tabulation.h1 !== currentH1) {
             body.appendParagraph(tabulation.h1).setHeading(DocumentApp.ParagraphHeading.HEADING2);
@@ -21,7 +31,7 @@ function printFullTabulation() {
         }
         body.appendParagraph(tabulation.body);
         body.appendParagraph('');
-        for (const figure of (_a = tabulation.figures) !== null && _a !== void 0 ? _a : []) {
+        for (const figure of (_c = tabulation.figures) !== null && _c !== void 0 ? _c : []) {
             body.appendParagraph(figure.title);
             if (figure.table) {
                 renderTable(context.body, figure.table.map(row => row.map(cell => cell.toString())));

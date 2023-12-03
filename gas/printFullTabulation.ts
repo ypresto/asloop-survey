@@ -3,6 +3,9 @@
 const FULL_TABULATION_ZIP_FILE_URL =
   'https://drive.google.com/file/d/1WOblm8N7eh0doZxbnKYlC0kvXT-PcHN4/view?usp=drive_link'
 
+const FULL_TABULATION_OUTPUT_DOCUMENT_URL =
+  'https://docs.google.com/document/d/1eg2UVCecZB6iLBMyus_HZpod1PqgauyalcyjWVTEvf8/edit'
+
 interface FullTabulationFigureType {
   title: string
   imageName: string | null
@@ -22,17 +25,28 @@ interface ContextFType {
   body: GoogleAppsScript.Document.Body
 }
 
-function printFullTabulation() {
-  const records = loadFullTabulationRecords()
+function printFullTabulationPage1() {
+  printFullTabulationImpl(1)
+}
 
-  const doc = DocumentApp.create('調査結果報告書2022')
+function printFullTabulationPage2() {
+  printFullTabulationImpl(2)
+}
+
+function printFullTabulationImpl(page: number) {
+  const batchSize = 200
+  const allRecords = loadFullTabulationRecords()
+  const records = allRecords.slice((page - 1) * batchSize, page * batchSize)
+  const prevRecord = allRecords[(page - 1) * batchSize - 1]
+
+  const doc = DocumentApp.openByUrl(FULL_TABULATION_OUTPUT_DOCUMENT_URL)
   const body = doc.getBody()
   const context: ContextFType = { body }
 
   body.appendParagraph('Ⅱ 調査の結果').setHeading(DocumentApp.ParagraphHeading.HEADING1)
 
-  let currentH1 = ''
-  let currentH2 = ''
+  let currentH1 = prevRecord?.h1 ?? ''
+  let currentH2 = prevRecord?.h2 ?? ''
   for (const tabulation of records) {
     if (tabulation.h1 !== currentH1) {
       body.appendParagraph(tabulation.h1).setHeading(DocumentApp.ParagraphHeading.HEADING2)
