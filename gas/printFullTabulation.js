@@ -48,7 +48,7 @@ function renderFigureImage(body, imageName) {
     const image = imageContainer.appendInlineImage(getFullTabBlobNamed(imageName));
     const height = image.getHeight();
     const width = image.getWidth();
-    const newWidth = Math.min(width, 480);
+    const newWidth = Math.min(width, ((body.getPageWidth() - body.getMarginLeft() - body.getMarginRight()) / 72) * 96);
     image.setWidth(newWidth);
     image.setHeight((newWidth / width) * height);
     body.appendParagraph('');
