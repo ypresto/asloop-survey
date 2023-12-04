@@ -9,7 +9,7 @@ function printFullTabulationPage2() {
     printFullTabulationImpl(2);
 }
 function printFullTabulationImpl(page) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const batchSize = 200;
     const allRecords = loadFullTabulationRecords();
     const records = allRecords.slice((page - 1) * batchSize, page * batchSize);
@@ -20,18 +20,29 @@ function printFullTabulationImpl(page) {
     body.appendParagraph('Ⅱ 調査の結果').setHeading(DocumentApp.ParagraphHeading.HEADING1);
     let currentH1 = (_a = prevRecord === null || prevRecord === void 0 ? void 0 : prevRecord.h1) !== null && _a !== void 0 ? _a : '';
     let currentH2 = (_b = prevRecord === null || prevRecord === void 0 ? void 0 : prevRecord.h2) !== null && _b !== void 0 ? _b : '';
+    let currentH3 = (_c = prevRecord === null || prevRecord === void 0 ? void 0 : prevRecord.h3) !== null && _c !== void 0 ? _c : '';
     for (const tabulation of records) {
         if (tabulation.h1 !== currentH1) {
-            body.appendParagraph(tabulation.h1).setHeading(DocumentApp.ParagraphHeading.HEADING2);
+            if (tabulation.h1) {
+                body.appendParagraph(tabulation.h1).setHeading(DocumentApp.ParagraphHeading.HEADING2);
+            }
             currentH1 = tabulation.h1;
         }
         if (tabulation.h2 !== currentH2) {
-            body.appendParagraph(tabulation.h2).setHeading(DocumentApp.ParagraphHeading.HEADING3);
+            if (tabulation.h2) {
+                body.appendParagraph(tabulation.h2).setHeading(DocumentApp.ParagraphHeading.HEADING3);
+            }
             currentH2 = tabulation.h2;
+        }
+        if (tabulation.h3 !== currentH3) {
+            if (tabulation.h3) {
+                body.appendParagraph(tabulation.h3).setHeading(DocumentApp.ParagraphHeading.HEADING4);
+            }
+            currentH3 = tabulation.h3;
         }
         body.appendParagraph(tabulation.body);
         body.appendParagraph('');
-        for (const figure of (_c = tabulation.figures) !== null && _c !== void 0 ? _c : []) {
+        for (const figure of (_d = tabulation.figures) !== null && _d !== void 0 ? _d : []) {
             body.appendParagraph(figure.title);
             if (figure.table) {
                 renderTable(context.body, figure.table.map(row => row.map(cell => cell.toString())));

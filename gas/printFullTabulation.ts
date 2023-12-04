@@ -15,7 +15,7 @@ interface FullTabulationFigureType {
 interface FullTabulationRecordType {
   h1: string
   h2: string
-  title: string
+  h3: string
   body: string
   description: string | null
   figures: FullTabulationFigureType[] | null
@@ -47,15 +47,27 @@ function printFullTabulationImpl(page: number) {
 
   let currentH1 = prevRecord?.h1 ?? ''
   let currentH2 = prevRecord?.h2 ?? ''
+  let currentH3 = prevRecord?.h3 ?? ''
   for (const tabulation of records) {
     if (tabulation.h1 !== currentH1) {
-      body.appendParagraph(tabulation.h1).setHeading(DocumentApp.ParagraphHeading.HEADING2)
+      if (tabulation.h1) {
+        body.appendParagraph(tabulation.h1).setHeading(DocumentApp.ParagraphHeading.HEADING2)
+      }
       currentH1 = tabulation.h1
     }
     if (tabulation.h2 !== currentH2) {
-      body.appendParagraph(tabulation.h2).setHeading(DocumentApp.ParagraphHeading.HEADING3)
+      if (tabulation.h2) {
+        body.appendParagraph(tabulation.h2).setHeading(DocumentApp.ParagraphHeading.HEADING3)
+      }
       currentH2 = tabulation.h2
     }
+    if (tabulation.h3 !== currentH3) {
+      if (tabulation.h3) {
+        body.appendParagraph(tabulation.h3).setHeading(DocumentApp.ParagraphHeading.HEADING4)
+      }
+      currentH3 = tabulation.h3
+    }
+
     body.appendParagraph(tabulation.body)
     body.appendParagraph('')
 
