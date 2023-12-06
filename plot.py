@@ -76,7 +76,7 @@ def adjust_figure_for_h(figure: Figure, n: int | None, title: str, description: 
         figure.text(0.03, -0.02, description, ha='left', va='top')
 
 
-def adjust_figure_for_h_stack(figure: Figure, n: int | None, title: str = '', description: str = '', palette=None):
+def adjust_figure_for_h_stack(figure: Figure, n: int | None, title: str = '', description: str = '', palette=None, enhanced_color=False):
     adjust_figure_for_h(figure, n, title, description,
                         percent=True, bar_label=False)
 
@@ -93,10 +93,19 @@ def adjust_figure_for_h_stack(figure: Figure, n: int | None, title: str = '', de
     container: BarContainer
 
     for i, container in enumerate(reversed(ax.containers)):
-        if i >= 2:
-            color = '#000'
+        if enhanced_color:
+            # palette -> num of black (start index)
+            # 2 -> 0 (2)
+            # 3 -> 1 (2)
+            # 4 -> 2 (2)
+            # 5 -> 2 (3)
+            # 6 -> 3 (3)
+            if len(palette) >= 5:
+                color = '#333' if i >= (len(palette) + 1) / 2 else '#fff'
+            else:
+                color = '#333' if i >= 2 else '#fff'
         else:
-            color = '#fff'
+            color = '#000' if i >= 2 else '#fff'
         path_effects = None
         if len(ax.containers) >= 2:
             path_effects = [withStroke(
