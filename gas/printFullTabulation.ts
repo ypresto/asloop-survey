@@ -4,7 +4,7 @@ const FULL_TABULATION_ZIP_FILE_URL =
   'https://drive.google.com/file/d/1WOblm8N7eh0doZxbnKYlC0kvXT-PcHN4/view?usp=drive_link'
 
 const FULL_TABULATION_OUTPUT_DOCUMENT_URL =
-  'https://docs.google.com/document/d/1eg2UVCecZB6iLBMyus_HZpod1PqgauyalcyjWVTEvf8/edit'
+  'https://docs.google.com/document/d/102j2qrxxWck7KNW1mo7IioRRn-wUqMB97GmmL32pym0/edit'
 
 interface FullTabulationFigureType {
   title: string
@@ -68,7 +68,8 @@ function printFullTabulationImpl(page: number) {
       currentH3 = tabulation.h3
     }
 
-    body.appendParagraph(tabulation.body)
+    tabulation.body.split('\n').forEach(line => body.appendParagraph('　' + line))
+
     body.appendParagraph('')
 
     for (const figure of tabulation.figures ?? []) {
