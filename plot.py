@@ -40,7 +40,7 @@ def adjust_figure_for_v(figure: Figure, n: int | None, title: str, description: 
         if bar_label:
             for container in ax.containers:
                 ax.bar_label(container, fmt='%.1f%%', padding=4,
-                             fontsize=bar_label if isinstance(bar_label, int) else None)
+                             fontsize=None if isinstance(bar_label, bool) else bar_label)
         # 101 for prevent tick label from being clipped by frame.
         ax.set_ylim(ymin=0, ymax=101 if ax.get_ylim()
                     [1] >= 100 else None, auto=None)
@@ -66,7 +66,7 @@ def adjust_figure_for_h(figure: Figure, n: int | None, title: str, description: 
         if bar_label:
             for container in ax.containers:
                 ax.bar_label(container, fmt='%.1f%%', padding=4,
-                             fontsize=bar_label if isinstance(bar_label, int) else None)
+                             fontsize=None if isinstance(bar_label, bool) else bar_label)
         # 101 for prevent tick label from being clipped by frame.
         ax.set_xlim(xmin=0, xmax=101 if ax.get_xlim()
                     [1] >= 100 else None, auto=None)
