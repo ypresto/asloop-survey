@@ -97,10 +97,17 @@ function renderFigureImage(body: GoogleAppsScript.Document.Body, imageName: stri
   const image = imageContainer.appendInlineImage(getFullTabBlobNamed(imageName))
   const height = image.getHeight()
   const width = image.getWidth()
-  const newWidth = Math.min(width, ((body.getPageWidth() - body.getMarginLeft() - body.getMarginRight()) / 72) * 96)
-  image.setWidth(newWidth)
-  image.setHeight((newWidth / width) * height)
-  body.appendParagraph('')
+  const contentWidth = Math.min(width, ((body.getPageWidth() - body.getMarginLeft() - body.getMarginRight()) / 72) * 96)
+  const scale = contentWidth / width
+  const scaledHeight = height * scale
+  if (scaledHeight > 480) {
+    const scale = 480 / height
+    image.setWidth(width * scale)
+    image.setHeight(480)
+  } else {
+    image.setWidth(contentWidth)
+    image.setHeight(scaledHeight)
+  }
 }
 
 function loadFullTabulationRecords() {
