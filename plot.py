@@ -26,7 +26,7 @@ mpl.rcParams["patch.force_edgecolor"] = False
 percent_locator = ticker.MaxNLocator(10, steps=[1, 2, 2.5, 5, 10])
 
 
-def adjust_figure_for_v(figure: Figure, n: int | None, title: str, description: str = '', percent: bool = True, bar_label: bool = True):
+def adjust_figure_for_v(figure: Figure, n: int | None, title: str, description: str = '', percent: bool = True, bar_label: bool | int = True):
     ax = figure.axes[0]
     ax.spines['left'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -39,7 +39,8 @@ def adjust_figure_for_v(figure: Figure, n: int | None, title: str, description: 
         ax.yaxis.set_major_locator(percent_locator)
         if bar_label:
             for container in ax.containers:
-                ax.bar_label(container, fmt='%.1f%%', padding=4)
+                ax.bar_label(container, fmt='%.1f%%', padding=4,
+                             fontsize=bar_label if isinstance(bar_label, int) else None)
         # 101 for prevent tick label from being clipped by frame.
         ax.set_ylim(ymin=0, ymax=101 if ax.get_ylim()
                     [1] >= 100 else None, auto=None)
@@ -51,7 +52,7 @@ def adjust_figure_for_v(figure: Figure, n: int | None, title: str, description: 
         figure.text(0.03, -0.02, description, ha='left', va='top')
 
 
-def adjust_figure_for_h(figure: Figure, n: int | None, title: str, description: str = '', percent: bool = True, bar_label: bool = True):
+def adjust_figure_for_h(figure: Figure, n: int | None, title: str, description: str = '', percent: bool = True, bar_label: bool | int = True):
     ax = figure.axes[0]
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
@@ -64,7 +65,8 @@ def adjust_figure_for_h(figure: Figure, n: int | None, title: str, description: 
         ax.xaxis.set_major_locator(percent_locator)
         if bar_label:
             for container in ax.containers:
-                ax.bar_label(container, fmt='%.1f%%', padding=4)
+                ax.bar_label(container, fmt='%.1f%%', padding=4,
+                             fontsize=bar_label if isinstance(bar_label, int) else None)
         # 101 for prevent tick label from being clipped by frame.
         ax.set_xlim(xmin=0, xmax=101 if ax.get_xlim()
                     [1] >= 100 else None, auto=None)
@@ -131,19 +133,19 @@ def _adjust_figure_for_grouped(figure: Figure):
                         bbox_to_anchor=(0.5, 0.95), ncol=6, title='')
 
 
-def adjust_figure_for_v_grouped(figure: Figure, n: int | None, title: str = '', description: str = '', percent: bool = True, bar_label: bool = True):
+def adjust_figure_for_v_grouped(figure: Figure, n: int | None, title: str = '', description: str = '', percent: bool = True, bar_label: bool | int = True):
     adjust_figure_for_v(figure, n, title, description,
                         percent=percent, bar_label=bar_label)
     _adjust_figure_for_grouped(figure)
 
 
-def adjust_figure_for_h_grouped(figure: Figure, n: int | None, title: str = '', description: str = '', percent: bool = True, bar_label: bool = True):
+def adjust_figure_for_h_grouped(figure: Figure, n: int | None, title: str = '', description: str = '', percent: bool = True, bar_label: bool | int = True):
     adjust_figure_for_h(figure, n, title, description,
                         percent=percent, bar_label=bar_label)
     _adjust_figure_for_grouped(figure)
 
 
-def vbar(data_series: pd.Series, n: int | None, title: str = '', description: str = '', percent: bool = True, bar_label: bool = True):
+def vbar(data_series: pd.Series, n: int | None, title: str = '', description: str = '', percent: bool = True, bar_label: bool | int = True):
     grid: FacetGrid = sns.catplot(data=data_series.to_frame().transpose(
     ), kind='bar', orient='v', width=0.5, height=5, aspect=16/9, color="C0")
     figure: Figure = grid.figure
@@ -152,7 +154,7 @@ def vbar(data_series: pd.Series, n: int | None, title: str = '', description: st
     return figure
 
 
-def hbar(data_series: pd.Series, n: int | None, title: str = '', description: str = '', percent: bool = True, bar_label: bool = True):
+def hbar(data_series: pd.Series, n: int | None, title: str = '', description: str = '', percent: bool = True, bar_label: bool | int = True):
     grid: FacetGrid = sns.catplot(data=data_series.to_frame().transpose(
     ), kind='bar', orient='h', width=0.5, height=5, aspect=16/9, color="C0")
     figure: Figure = grid.figure
