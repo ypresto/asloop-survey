@@ -33,6 +33,8 @@ def adjust_figure_for_v(figure: Figure, n: int | None, title: str, description: 
     ax.spines['top'].set_visible(False)
     ax.spines['bottom'].set_color('black')
     ax.xaxis.grid(False)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
     ax.margins(x=0.05)
     if percent:
         ax.yaxis.set_major_formatter(ticker.PercentFormatter())
@@ -59,6 +61,8 @@ def adjust_figure_for_h(figure: Figure, n: int | None, title: str, description: 
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_color('black')
     ax.yaxis.grid(False)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
     ax.margins(y=0.05)
     if percent:
         ax.xaxis.set_major_formatter(ticker.PercentFormatter(decimals=0))
