@@ -21,10 +21,6 @@ interface FullTabulationRecordType {
   figures: FullTabulationFigureType[] | null
 }
 
-interface ContextFType {
-  body: GoogleAppsScript.Document.Body
-}
-
 function printFullTabulationPage1() {
   printFullTabulationImpl(1)
 }
@@ -41,7 +37,6 @@ function printFullTabulationImpl(page: number) {
 
   const doc = DocumentApp.openByUrl(FULL_TABULATION_OUTPUT_DOCUMENT_URL)
   const body = doc.getBody()
-  const context: ContextFType = { body }
 
   body.appendParagraph('Ⅱ 調査の結果').setHeading(DocumentApp.ParagraphHeading.HEADING1)
 
@@ -73,16 +68,23 @@ function printFullTabulationImpl(page: number) {
     body.appendParagraph('')
 
     for (const figure of tabulation.figures ?? []) {
-      body.appendParagraph(figure.title)
+      if (!figure.table && !figure.imageName) throw new Error('Figure must have table or image')
+
+      const figTitle = body.appendParagraph(figure.title)
+
       if (figure.table) {
         renderTable(
-          context.body,
+          body,
           figure.table.map(row => row.map(cell => cell.toString()))
         )
+        body.appendParagraph('') // also work as style guard
       }
       if (figure.imageName) {
-        renderFigureImage(context.body, figure.imageName)
+        renderFigureImage(body, figure.imageName)
+        body.appendParagraph('') // also work as style guard
       }
+
+      figTitle.editAsText().setBold(true).setFontSize(9).setForegroundColor('#666666')
     }
   }
 

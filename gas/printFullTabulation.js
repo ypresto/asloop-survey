@@ -16,7 +16,6 @@ function printFullTabulationImpl(page) {
     const prevRecord = allRecords[(page - 1) * batchSize - 1];
     const doc = DocumentApp.openByUrl(FULL_TABULATION_OUTPUT_DOCUMENT_URL);
     const body = doc.getBody();
-    const context = { body };
     body.appendParagraph('Ⅱ 調査の結果').setHeading(DocumentApp.ParagraphHeading.HEADING1);
     let currentH1 = (_a = prevRecord === null || prevRecord === void 0 ? void 0 : prevRecord.h1) !== null && _a !== void 0 ? _a : '';
     let currentH2 = (_b = prevRecord === null || prevRecord === void 0 ? void 0 : prevRecord.h2) !== null && _b !== void 0 ? _b : '';
@@ -43,13 +42,18 @@ function printFullTabulationImpl(page) {
         tabulation.body.split('\n').forEach(line => body.appendParagraph('　' + line));
         body.appendParagraph('');
         for (const figure of (_d = tabulation.figures) !== null && _d !== void 0 ? _d : []) {
-            body.appendParagraph(figure.title);
+            if (!figure.table && !figure.imageName)
+                throw new Error('Figure must have table or image');
+            const figTitle = body.appendParagraph(figure.title);
             if (figure.table) {
-                renderTable(context.body, figure.table.map(row => row.map(cell => cell.toString())));
+                renderTable(body, figure.table.map(row => row.map(cell => cell.toString())));
+                body.appendParagraph(''); // also work as style guard
             }
             if (figure.imageName) {
-                renderFigureImage(context.body, figure.imageName);
+                renderFigureImage(body, figure.imageName);
+                body.appendParagraph(''); // also work as style guard
             }
+            figTitle.editAsText().setBold(true).setFontSize(9).setForegroundColor('#666666');
         }
     }
     Logger.log('Document created on %s', doc.getUrl());
