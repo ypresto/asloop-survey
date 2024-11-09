@@ -1,7 +1,7 @@
 "use strict";
 /// <reference types="google-apps-script" />
 const FULL_TABULATION_ZIP_FILE_URL = 'https://drive.google.com/file/d/1WOblm8N7eh0doZxbnKYlC0kvXT-PcHN4/view?usp=drive_link';
-const FULL_TABULATION_OUTPUT_DOCUMENT_URL = 'https://docs.google.com/document/d/102j2qrxxWck7KNW1mo7IioRRn-wUqMB97GmmL32pym0/edit';
+const FULL_TABULATION_OUTPUT_DOCUMENT_URL = 'https://docs.google.com/document/d/1YZNE9xg09qxEaShnAc6XmsgXlcDBASU-Y_pTRURzz90/edit';
 function printFullTabulationPage1() {
     printFullTabulationImpl(1);
 }
@@ -60,6 +60,9 @@ function printFullTabulationImpl(page) {
 }
 function renderFigureImage(body, imageName) {
     const imageContainer = body.appendParagraph('');
+    _renderFigureImageInContainer(body, imageContainer, imageName);
+}
+function _renderFigureImageInContainer(body, imageContainer, imageName) {
     const image = imageContainer.appendInlineImage(getFullTabBlobNamed(imageName));
     const height = image.getHeight();
     const width = image.getWidth();
