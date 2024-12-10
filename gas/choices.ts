@@ -43,7 +43,7 @@ function getChoices() {
   const spreadSheet = SpreadsheetApp.create(`${form.getTitle()}-choices`, titleAndChoicesMap.length + 1, 6)
   const sheet = spreadSheet.getSheets()[0]
 
-  sheet.getRange(1, 1, 1, 8).setValues([['ページ番号', '設問文章', '説明文', '選択肢', '複数回答', '自由記述', 'テキスト回答', 'ジャンプ先ページ番号マップ']])
+  sheet.getRange(1, 1, 1, 8).setValues([['ページ番号', '設問文章', '説明文', '選択肢', '複数回答', 'その他回答', '自由記述', 'ジャンプ先ページ番号マップ']])
   titleAndChoicesMap.forEach(({ pageIndex, title, description, choices, hasMultiple, hasOther, isText }, i) => {
     const pageMap = choices?.length ? JSON.stringify(choices.map(c => c.goTo ?? null)) : ''
     sheet.getRange(i + 2, 1, 1, 8).setValues([[pageIndex, title, description, choices?.map(c => c.value).join(',') ?? '', hasMultiple ? 1 : 0, hasOther ? 1 : 0, isText ? 1 : 0, pageMap]])

@@ -35,7 +35,7 @@ function getChoices() {
     });
     const spreadSheet = SpreadsheetApp.create(`${form.getTitle()}-choices`, titleAndChoicesMap.length + 1, 6);
     const sheet = spreadSheet.getSheets()[0];
-    sheet.getRange(1, 1, 1, 8).setValues([['ページ番号', '設問文章', '説明文', '選択肢', '複数回答', '自由記述', 'テキスト回答', 'ジャンプ先ページ番号マップ']]);
+    sheet.getRange(1, 1, 1, 8).setValues([['ページ番号', '設問文章', '説明文', '選択肢', '複数回答', 'その他回答', '自由記述', 'ジャンプ先ページ番号マップ']]);
     titleAndChoicesMap.forEach(({ pageIndex, title, description, choices, hasMultiple, hasOther, isText }, i) => {
         var _a;
         const pageMap = (choices === null || choices === void 0 ? void 0 : choices.length) ? JSON.stringify(choices.map(c => { var _a; return (_a = c.goTo) !== null && _a !== void 0 ? _a : null; })) : '';
