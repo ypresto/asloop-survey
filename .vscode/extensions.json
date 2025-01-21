@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "ms-toolsai.jupyter",
+    "ms-python.autopep8",
+    "ms-python.isort",
+    "ms-python.python",
+    "streetsidesoftware.code-spell-checker",
+    "janisdd.vscode-edit-csv",
+    "usernamehw.errorlens",
+    "grapecity.gc-excelviewer",
+    "mechatroner.rainbow-csv"
+  ]
+}
