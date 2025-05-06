@@ -1,6 +1,6 @@
 "use strict";
 /// <reference types="google-apps-script" />
-const TABULATION_FILE_URL = 'https://drive.google.com/file/d/1JVa9eE67qMy_mLosfK3thuh-gjDlD05y/view?usp=share_link';
+const TABULATION_FILE_URL = 'https://drive.google.com/file/d/1MIx7WttOQLIGXFRusULT_4jiWlz72WyH/view?usp=drive_link';
 function printTabulation() {
     const pages = loadFormPages();
     const tabulations = loadTabulations();
