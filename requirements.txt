@@ -1,5 +1,5 @@
-pandas
-matplotlib
-seaborn
-pyarrow
-openpyxl
+pandas==1.5.3
+matplotlib==3.8.2
+seaborn==0.13.0
+pyarrow==11.0.0
+openpyxl==3.1.5
